@@ -6,30 +6,31 @@ import React, { useEffect, useState } from "react";
 
 function Provider({ children }) {
   useEffect(() => {
-    CreateNewUser();
-  }, []);
+    const fetchUser = async () => {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (userError || !user) return;
 
-  const CreateNewUser = () => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      let { data: Users, error } = await supabase
+      const { data: Users, error } = await supabase
         .from("Users")
         .select("*")
-        .eq("email", user?.email);
+        .eq("email", user.email);
 
-      console.log(Users);
-
-      if (Users?.length == 0) {
-        const { data, error } = await supabase.from("Users").insert([
+      if (Users?.length === 0) {
+        await supabase.from("Users").insert([
           {
-            name: user?.user_metadata?.name,
-            email: user?.email,
-            picture: user?.user_metadata?.picture,
+            name: user.user_metadata?.name,
+            email: user.email,
+            picture: user.user_metadata?.picture,
           },
         ]);
-        console.log(data);
       }
-    });
-  };
+    };
+
+    fetchUser();
+  }, []);
 
   return <div>{children}</div>;
 }
