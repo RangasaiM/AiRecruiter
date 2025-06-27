@@ -6,11 +6,18 @@ import React, { useState } from "react";
 import FormContainer from "./_components/FormContainer";
 import QuestionList from "./_components/QuestionList";
 import { toast } from "sonner";
+import InterviewLink from "./_components/InterviewLink";
 
 function CreateInterview() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState();
+  const [interviewId, setInterviewId] = useState();
+
+  React.useEffect(() => {
+    console.log("interviewId:", interviewId);
+  }, [interviewId]);
+
   const onHandleInputChange = (field, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -33,6 +40,11 @@ function CreateInterview() {
     setStep(step + 1);
   };
 
+  const onCreateLink = (interview_id) => {
+    setInterviewId(interview_id);
+    setStep(step + 1);
+  };
+
   return (
     <div className="mt-10 px-10 md:px-24 lg:px-44 xl:px-56">
       <div className="flex gap-5 items-center">
@@ -46,7 +58,12 @@ function CreateInterview() {
           GOToNext={onGoToNext}
         />
       ) : step == 2 ? (
-        <QuestionList formData={formData} />
+        <QuestionList
+          formData={formData}
+          onCreateLink={(interviewId) => onCreateLink(interviewId)}
+        />
+      ) : step == 3 ? (
+        <InterviewLink interview_Id={interviewId} formData={formData} />
       ) : null}
     </div>
   );

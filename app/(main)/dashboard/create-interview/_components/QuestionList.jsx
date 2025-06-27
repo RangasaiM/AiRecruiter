@@ -1,18 +1,44 @@
 "use client";
+import { Button } from "@/components/ui/button";
 import axios from "axios";
-import { Loader2Icon } from "lucide-react";
+import { Loader2, Loader2Icon } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
+import QuestionListContainer from "./QuestionListContainer";
+import { supabase } from "@/services/supabaseClient";
+import { useUser } from "@/app/provider";
+import { v4 as uuidv4 } from "uuid";
 
-function QuestionList({ formData }) {
+function QuestionList({ formData, onCreateLink }) {
   const [loading, setLoading] = useState(false);
   const [questionList, setQuestionList] = useState([]);
+  const { user } = useUser();
+  const [saveLoading, setSaveLoading] = useState(false);
 
   useEffect(() => {
     if (formData) {
       GenerateQuestionList();
     }
   }, [formData]);
+
+  const onFinish = async () => {
+    setSaveLoading(true);
+    const interview_id = uuidv4();
+    const { data, error } = await supabase
+      .from("Interviews")
+      .insert([
+        {
+          ...formData,
+          questionList: questionList,
+          userEmail: user?.email,
+          interview_id: interview_id,
+        },
+      ])
+      .select();
+    setSaveLoading(false);
+
+    onCreateLink(interview_id);
+  };
 
   const GenerateQuestionList = async () => {
     setLoading(true);
@@ -59,15 +85,16 @@ function QuestionList({ formData }) {
         </div>
       )}
       {questionList?.length > 0 && (
-        <div className="p-5 border border-gray-300 rounded-xl">
-          {questionList.map((item, index) => (
-            <div key={index} className="p-3 border border-gray-50 rounded-xl">
-              <h2 className="font-medium">{item.question}</h2>
-              <h2>Type: {item?.type}</h2>
-            </div>
-          ))}
+        <div>
+          <QuestionListContainer questionList={questionList} />
         </div>
       )}
+      <div className="flex justify-end mt-10">
+        <Button onClick={() => onFinish()} disabled={saveLoading}>
+          {saveLoading && <Loader2 className="animate-spin" />}
+          Create Interview Link & Finish
+        </Button>
+      </div>
     </div>
   );
 }
