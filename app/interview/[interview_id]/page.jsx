@@ -20,6 +20,7 @@ function Interview() {
     jobDescription: "",
   });
   const [userName, setUserName] = useState();
+  const [userEmail, setUserEmail] = useState();
   const [loading, setLoading] = useState(false);
   const { interviewInfo, setInterviewInfo } = useContext(InterviewDataContext);
   const router = useRouter();
@@ -60,6 +61,7 @@ function Interview() {
     console.log(Interviews[0]);
     setInterviewInfo({
       userName: userName,
+      userEmail: userEmail,
       interviewData: Interviews[0],
     });
     router.push("/interview/" + interview_id + "/start");
@@ -97,6 +99,16 @@ function Interview() {
             type="text"
             className=""
             onChange={(event) => setUserName(event.target.value)}
+          />
+        </div>
+
+        <div className="w-full">
+          <h2>Enter your Email</h2>
+          <Input
+            placeholder="e.g. john@example.com"
+            type="text"
+            className=""
+            onChange={(event) => setUserEmail(event.target.value)}
           />
         </div>
 
