@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { ArrowRight, Copy, Send } from 'lucide-react'
 import moment from 'moment'
+import Link from 'next/link'
 import React from 'react'
 import { toast } from 'sonner'
 
@@ -15,7 +16,7 @@ function InterviewCard({ interview, viewDetail = false }) {
 
   const onSend = () => {
     toast.loading('Sending email...');
-    window.location.href = 'mailto:rangasaimangalagiri@gmail.com?subject=Interview+Link&body=Check+out+this+interview+link:+' + process.env.NEXT_PUBLIC_HOST_URL + '/' + interview?.interview_id;
+    //window.location.href = 'mailto:rangasaimangalagiri@gmail.com?subject=Interview+Link&body=Check+out+this+interview+link:+' + process.env.NEXT_PUBLIC_HOST_URL + '/' + interview?.interview_id;
     toast.success('Email sent successfully');
   }
   return (
@@ -34,7 +35,10 @@ function InterviewCard({ interview, viewDetail = false }) {
       {!viewDetail ? <div className='flex gap-3 w-full mt-5'>
         <Button variant={'outline'} className='text-sm' onClick={() => copyLink()}><Copy /> Copy Link</Button>
         <Button className='text-sm' onClick={() => onSend()}><Send /> Send</Button>
-      </div> : <Button className='mt-5 w-full' variant='outline'>View Detail <ArrowRight /> </Button>}
+      </div> : 
+      <Link href={'/scheduled-interview/'+interview?.interview_id+"/details"}>
+      <Button className='mt-5 w-full' variant='outline'>View Detail <ArrowRight /> </Button> 
+      </Link>}
     </div>
   )
 }
