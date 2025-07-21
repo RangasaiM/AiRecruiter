@@ -5,6 +5,7 @@ import { supabase } from "@/services/supabaseClient";
 import { useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import InterviewDetailContainer from "./_components/InterviewDetailContainer";
+import CandidatList from "./_components/CandidatList";
 
 
 function InterviewDetail(){
@@ -13,7 +14,9 @@ function InterviewDetail(){
     const [interviewDetail,setInterviewDetail] = useState()
 
     useEffect(()=>{
-        user&& GetInterviewDetail();
+        if(user && interview_id){
+            GetInterviewDetail()
+        }
     },[user])
 
     const GetInterviewDetail= async ()=>{
@@ -30,6 +33,7 @@ function InterviewDetail(){
         <div className="mt-5">
             <h2 className="font-bold text-2xl">Interview Detail</h2>
             <InterviewDetailContainer InterviewDetail={interviewDetail}/>
+            <CandidatList candidateList={interviewDetail?.['interview-feedback']} />
         </div>
     )
 }

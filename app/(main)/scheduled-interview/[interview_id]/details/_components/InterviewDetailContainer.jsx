@@ -28,10 +28,11 @@ function InterviewDetailContainer({InterviewDetail}){
                 <h2 className='font-bold'>Interview Questions</h2>
                 <div className='grid grid-cols-2 gap-3'>
                     {InterviewDetail?.questionList.map((item,index)=>(
-                         <h2 className='text-xs'>{index+1}.{item?.question}</h2>
+                         <h2 className='text-xs' key={index}>{index+1}.{item?.question}</h2>
                     ))}
                 </div>
             </div>
+
         </div>
     )
 }
