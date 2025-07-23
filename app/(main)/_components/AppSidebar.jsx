@@ -10,18 +10,22 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Plus } from "lucide-react";
-
+import { Plus, LogOut } from "lucide-react";
 import Image from "next/image";
-
 import Link from "next/link";
-
 import { Button } from "@/components/ui/button";
 import { SideBarOptions } from "@/services/Constants";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { supabase } from "@/services/supabaseClient";
 
 export function AppSidebar() {
   const path = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace("/auth");
+  };
 
   return (
     <Sidebar>
@@ -37,6 +41,7 @@ export function AppSidebar() {
           <Plus /> Create New Interview
         </Button>
       </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarContent>
@@ -49,7 +54,7 @@ export function AppSidebar() {
                   >
                     <Link href={option.path}>
                       <option.icon
-                        className={` ${path == option.path && "text-primary"}`}
+                        className={`${path == option.path && "text-primary"}`}
                       />
                       <span
                         className={`text-[16px] font-medium ${
@@ -66,7 +71,22 @@ export function AppSidebar() {
           </SidebarContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter />
+
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem className="p-1">
+            <SidebarMenuButton
+              className="p-5 hover:bg-red-50 text-red-600"
+              onClick={handleLogout}
+            >
+              <>
+                <LogOut className="w-5 h-5 mr-2" />
+                <span className="text-[16px] font-medium">Logout</span>
+              </>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }

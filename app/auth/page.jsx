@@ -12,6 +12,7 @@ function Login() {
         queryParams: {
           prompt: "select_account",
         },
+        redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
 
