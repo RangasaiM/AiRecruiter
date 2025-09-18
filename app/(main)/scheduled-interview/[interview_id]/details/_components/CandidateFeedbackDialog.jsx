@@ -41,8 +41,8 @@ function CandidateFeedbackDialog({ candidate }) {
                                 <h2 className='font-bold'>Skills Assesment</h2>
                                 <div className='mt-3 grid grid-cols-2 gap-10'>
                                     <div>
-                                        <h2 className='flex justify-between'>Technical Skills <span>{feedback?.feedback?.rating?.techicalSkills}/10</span></h2>
-                                        <Progress value={feedback?.feedback?.rating?.techicalSkills * 10} className='mt-1' />
+                                        <h2 className='flex justify-between'>Technical Skills <span>{feedback?.feedback?.rating?.technicalSkills}/10</span></h2>
+                                        <Progress value={feedback?.feedback?.rating?.technicalSkills * 10} className='mt-1' />
                                     </div>
                                     <div>
                                         <h2 className='flex justify-between'>Communication <span>{feedback?.feedback?.rating?.communication}/10</span></h2>
@@ -53,8 +53,8 @@ function CandidateFeedbackDialog({ candidate }) {
                                         <Progress value={feedback?.feedback?.rating?.problemSolving * 10} className='mt-1' />
                                     </div>
                                     <div>
-                                        <h2 className='flex justify-between'>Experience <span>{feedback?.feedback?.rating?.experince}/10</span></h2>
-                                        <Progress value={feedback?.feedback?.rating?.experince * 10} className='mt-1' />
+                                        <h2 className='flex justify-between'>Experience <span>{feedback?.feedback?.rating?.experience}/10</span></h2>
+                                        <Progress value={feedback?.feedback?.rating?.experience * 10} className='mt-1' />
                                     </div>
                                 </div>
                             </div>
