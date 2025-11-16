@@ -14,8 +14,13 @@ function StartInterview() {
   const { interviewInfo, setInterviewInfo } = useContext(InterviewDataContext);
   const vapiRef = useRef(null);
   if (!vapiRef.current) {
-    console.log("VAPI KEY:", process.env.NEXT_PUBLIC_VAPI_PUBLIC_API_KEY); // Debug: print API key
-    vapiRef.current = new Vapi(process.env.NEXT_PUBLIC_VAPI_PUBLIC_API_KEY);
+    const vapiKey = process.env.NEXT_PUBLIC_VAPI_PUBLIC_API_KEY || process.env.NEXT_PUBLIC_VAPI_KEY;
+    if (!vapiKey) {
+      console.error("VAPI API key is missing!");
+    } else {
+      console.log("VAPI initialized successfully");
+      vapiRef.current = new Vapi(vapiKey);
+    }
   }
   const vapi = vapiRef.current;
   const [activeUser, setActiveUser] = useState(false);
@@ -23,11 +28,22 @@ function StartInterview() {
   const { interview_id } = useParams();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [timer, setTimer] = useState(0);
+  const timerRef = useRef(null);
   useEffect(() => {
-    interviewInfo && startCall();
+    if (interviewInfo && vapi) {
+      startCall();
+    } else if (interviewInfo && !vapi) {
+      toast.error("Voice API is not initialized. Please check your VAPI API key.");
+    }
   }, [interviewInfo]);
 
   const startCall = () => {
+    if (!vapi) {
+      toast.error("Voice API is not available");
+      return;
+    }
+    
     setLoading(true);
     let questionList = "";
     interviewInfo?.interviewData?.questionList.forEach(
@@ -125,9 +141,22 @@ Key Guidelines:
   };
 
   const stopInterview = () => {
+    // Stop timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
     vapi.stop();
     console.log("Interview stopped");
     GenerateFeedback();
+  };
+
+  // Format timer display (HH:MM:SS)
+  const formatTime = (seconds) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
   // vapi.on("message", (message) => {
@@ -150,18 +179,27 @@ Key Guidelines:
       console.log("Voice conversation started");
       toast("Interview Connected...");
       setLoading(false);
+      // Start timer
+      timerRef.current = setInterval(() => {
+        setTimer((prev) => prev + 1);
+      }, 1000);
     });
 
     vapi.on("speech-start", () => {
-      console.log("User started speaking");
-      setActiveUser(false);
+      console.log("AI started speaking");
+      setActiveUser(true);
     });
     vapi.on("speech-end", () => {
-      console.log("User stopped speaking");
-      setActiveUser(true);
+      console.log("AI stopped speaking");
+      setActiveUser(false);
     });
     vapi.on("call-end", (event) => {
       console.log("Voice conversation ended:", event);
+      // Stop timer
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
       if (event?.reason) {
         toast.error("Interview ended: " + event.reason);
       }
@@ -175,6 +213,10 @@ Key Guidelines:
 
     // Cleanup the listener
     return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
       vapi.stop();
       if (vapi.destroy) vapi.destroy();
       vapi.off("message", handleMessage);
@@ -182,6 +224,7 @@ Key Guidelines:
       vapi.off("speech-start", () => console.log("Ended"));
       vapi.off("speech-end", () => console.log("Ended"));
       vapi.off("call-end", () => console.log("Ended"));
+      vapi.off("error", () => console.log("Ended"));
     };
   }, []);
 
@@ -190,34 +233,51 @@ Key Guidelines:
     console.log("conversation", conversation);
 
     if (!conversation) {
-      toast.error("No conversation data available to generate feedback.");
+      console.warn("No conversation data available to generate feedback.");
+      toast.error("No conversation data available. Redirecting...");
+      setTimeout(() => {
+        router.replace("/interview/" + interview_id + "/completed");
+      }, 2000);
       setLoading(false);
       return;
     }
 
-    const result = await axios.post("/api/ai-feedback", {
-      conversation: conversation,
-    });
-    console.log(result?.data);
-    const Content = result?.data?.content;
-    const FINAL_CONTENT = Content.replace("```json", "").replace("```", "");
-    console.log(FINAL_CONTENT);
-    // Save to Database
+    try {
+      const result = await axios.post("/api/ai-feedback", {
+        conversation: conversation,
+      });
+      console.log(result?.data);
+      const Content = result?.data?.content;
+      const FINAL_CONTENT = Content.replace("```json", "").replace("```", "");
+      console.log(FINAL_CONTENT);
+      // Save to Database
 
-    const { data, error } = await supabase
-      .from("interview-feedback")
-      .insert([
-        {
-          userName: interviewInfo?.userName,
-          userEmail: interviewInfo?.userEmail,
-          interview_id: interview_id,
-          feedback: JSON.parse(FINAL_CONTENT),
-          recommended: false,
-        },
-      ])
-      .select();
-    console.log(data);
-    router.replace("/interview/" + interview_id + "/completed");
+      const { data, error } = await supabase
+        .from("interview-feedback")
+        .insert([
+          {
+            userName: interviewInfo?.userName,
+            userEmail: interviewInfo?.userEmail,
+            interview_id: interview_id,
+            feedback: JSON.parse(FINAL_CONTENT),
+            recommended: false,
+          },
+        ])
+        .select();
+      
+      if (error) {
+        console.error('Supabase Error:', error);
+        toast.error('Error saving feedback: ' + error.message);
+      } else {
+        console.log('Feedback saved:', data);
+      }
+      
+      router.replace("/interview/" + interview_id + "/completed");
+    } catch (error) {
+      console.error('Feedback generation error:', error);
+      toast.error('Failed to generate feedback');
+      setLoading(false);
+    }
   };
 
   return (
@@ -226,14 +286,14 @@ Key Guidelines:
         AI Interview Session
         <span className="flex gap-2 items-center">
           <Timer />
-          00:00:00
+          {formatTime(timer)}
         </span>
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-7 mt-5">
         <div className="bg-white h-[400px] rounded-lg border flex flex-col gap-3 items-center justify-center">
           <div className="relative">
-            {!activeUser && (
+            {activeUser && (
               <span className="absolute inset-0 rounded-full bg-blue-500 opacity-75 animate-ping" />
             )}
             <Image
@@ -249,10 +309,10 @@ Key Guidelines:
         <div className="bg-white h-[400px] rounded-lg border flex flex-col gap-3 items-center justify-center">
           <div className="relative">
             {!activeUser && (
-              <span className="absolute inset-0 rounded-full bg-blue-500 opacity-75 animate-ping" />
+              <span className="absolute inset-0 rounded-full bg-green-500 opacity-75 animate-ping" />
             )}
             <h2 className="text-2xl bg-primary text-white p-3 rounded-full px-5">
-              {interviewInfo?.userName[0]}
+              {interviewInfo?.userName?.[0] || "U"}
             </h2>
           </div>
           <h2>{interviewInfo?.userName}</h2>

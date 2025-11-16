@@ -4,6 +4,14 @@ import OpenAI from "openai";
 
 export async function POST(req) {
   const { conversation } = await req.json();
+  
+  if (!conversation) {
+    return NextResponse.json(
+      { error: 'No conversation data provided' },
+      { status: 400 }
+    );
+  }
+  
   const FINAL_PROMPT = FEEDBACK_PROMPT.replace(
     "{{conversation}}",
     JSON.stringify(conversation)
@@ -23,7 +31,10 @@ export async function POST(req) {
     console.log(completion.choices[0].message);
     return NextResponse.json(completion.choices[0].message);
   } catch (e) {
-    console.log(e);
-    return NextResponse.json(e);
+    console.error('AI Feedback Error:', e);
+    return NextResponse.json(
+      { error: e.message || 'Failed to generate feedback' },
+      { status: 500 }
+    );
   }
 }
