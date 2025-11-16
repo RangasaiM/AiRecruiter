@@ -15,7 +15,9 @@ import {
 import { toast } from "sonner";
 
 function InterviewLink({ interview_Id, formData }) {
-  const url = process.env.NEXT_PUBLIC_HOST_URL + "/" + interview_Id;
+  const url = process.env.NEXT_PUBLIC_HOST_URL 
+    ? process.env.NEXT_PUBLIC_HOST_URL + "/interview/" + interview_Id
+    : window.location.origin + "/interview/" + interview_Id;
 
   const GetInterviewUrl = () => {
     return url;
