@@ -25,16 +25,23 @@ function QuestionList({ formData, onCreateLink }) {
     setSaveLoading(true);
     try {
       const interview_id = uuidv4();
+      
+      // Prepare data for database - ensure type is JSON string
+      const interviewData = {
+        jobPosition: formData.jobPosition,
+        jobDescription: formData.jobDescription,
+        duration: formData.duration,
+        type: JSON.stringify(formData.type), // Convert array to JSON string
+        questionList: questionList,
+        userEmail: user?.email,
+        interview_id: interview_id,
+      };
+      
+      console.log('Saving interview data:', interviewData);
+      
       const { data, error } = await supabase
         .from("Interviews")
-        .insert([
-          {
-            ...formData,
-            questionList: questionList,
-            userEmail: user?.email,
-            interview_id: interview_id,
-          },
-        ])
+        .insert([interviewData])
         .select();
       
       if (error) {
@@ -44,6 +51,7 @@ function QuestionList({ formData, onCreateLink }) {
         return;
       }
       
+      console.log('Interview created successfully:', data);
       setSaveLoading(false);
       onCreateLink(interview_id);
     } catch (err) {
@@ -68,8 +76,10 @@ function QuestionList({ formData, onCreateLink }) {
       }
       
       const Content = result.data.content;
+      // Remove markdown code blocks and trim
       let FINAL_CONTENT = Content.replace(/```json|```/g, "").trim();
 
+      // Handle legacy format: interviewQuestions=...
       if (FINAL_CONTENT.startsWith("interviewQuestions=")) {
         FINAL_CONTENT = FINAL_CONTENT.replace(
           /^interviewQuestions\s*=\s*/,
@@ -77,14 +87,27 @@ function QuestionList({ formData, onCreateLink }) {
         ).trim();
       }
 
+      // Parse the JSON
       let parsed;
-      if (FINAL_CONTENT.startsWith("[")) {
-        parsed = { interviewQuestions: JSON.parse(FINAL_CONTENT) };
-      } else {
-        parsed = JSON.parse(FINAL_CONTENT);
+      try {
+        // If it starts with [, wrap it in an object
+        if (FINAL_CONTENT.startsWith("[")) {
+          parsed = { interviewQuestions: JSON.parse(FINAL_CONTENT) };
+        } else {
+          parsed = JSON.parse(FINAL_CONTENT);
+        }
+      } catch (parseError) {
+        console.error('JSON Parse Error:', parseError);
+        console.log('Failed content:', FINAL_CONTENT);
+        throw new Error('Failed to parse AI response. Please try again.');
       }
 
-      setQuestionList(parsed.interviewQuestions || []);
+      const questions = parsed.interviewQuestions || [];
+      if (questions.length === 0) {
+        throw new Error('No questions were generated. Please try again.');
+      }
+      
+      setQuestionList(questions);
       setLoading(false);
     } catch (e) {
       console.error('Question Generation Error:', e);

@@ -246,12 +246,23 @@ Key Guidelines:
       const result = await axios.post("/api/ai-feedback", {
         conversation: conversation,
       });
-      console.log(result?.data);
+      console.log('Feedback API Response:', result?.data);
+      
       const Content = result?.data?.content;
-      const FINAL_CONTENT = Content.replace("```json", "").replace("```", "");
-      console.log(FINAL_CONTENT);
+      // Remove markdown code blocks and trim
+      let FINAL_CONTENT = Content.replace(/```json|```/g, "").trim();
+      console.log('Parsed Feedback Content:', FINAL_CONTENT);
+      
+      // Parse and validate feedback
+      let feedbackData;
+      try {
+        feedbackData = JSON.parse(FINAL_CONTENT);
+      } catch (parseError) {
+        console.error('Feedback JSON Parse Error:', parseError);
+        throw new Error('Failed to parse feedback response');
+      }
+      
       // Save to Database
-
       const { data, error } = await supabase
         .from("interview-feedback")
         .insert([
@@ -259,8 +270,8 @@ Key Guidelines:
             userName: interviewInfo?.userName,
             userEmail: interviewInfo?.userEmail,
             interview_id: interview_id,
-            feedback: JSON.parse(FINAL_CONTENT),
-            recommended: false,
+            feedback: feedbackData,
+            recommended: feedbackData?.feedback?.recommendation === "Yes",
           },
         ])
         .select();
@@ -270,12 +281,13 @@ Key Guidelines:
         toast.error('Error saving feedback: ' + error.message);
       } else {
         console.log('Feedback saved:', data);
+        toast.success('Interview completed successfully!');
       }
       
       router.replace("/interview/" + interview_id + "/completed");
     } catch (error) {
       console.error('Feedback generation error:', error);
-      toast.error('Failed to generate feedback');
+      toast.error('Failed to generate feedback: ' + error.message);
       setLoading(false);
     }
   };

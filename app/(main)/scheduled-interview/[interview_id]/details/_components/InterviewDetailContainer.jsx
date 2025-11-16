@@ -3,6 +3,11 @@ import React from 'react'
 import moment from 'moment/moment'
 
 function InterviewDetailContainer({InterviewDetail}){
+    // Ensure questionList is an array
+    const questionList = Array.isArray(InterviewDetail?.questionList) 
+        ? InterviewDetail.questionList 
+        : [];
+    
     return (
         <div className='p-5 bg-white rounded-lg mt-5'>
             <h2>{InterviewDetail?.jobPosition}</h2>
@@ -27,9 +32,13 @@ function InterviewDetailContainer({InterviewDetail}){
             <div className='mt-5'>
                 <h2 className='font-bold'>Interview Questions</h2>
                 <div className='grid grid-cols-2 gap-3'>
-                    {InterviewDetail?.questionList.map((item,index)=>(
-                         <h2 className='text-xs' key={index}>{index+1}.{item?.question}</h2>
-                    ))}
+                    {questionList.length > 0 ? (
+                        questionList.map((item,index)=>(
+                            <h2 className='text-xs' key={index}>{index+1}.{item?.question}</h2>
+                        ))
+                    ) : (
+                        <p className='text-sm text-gray-500'>No questions available</p>
+                    )}
                 </div>
             </div>
 

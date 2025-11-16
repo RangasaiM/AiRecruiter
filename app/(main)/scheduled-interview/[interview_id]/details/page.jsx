@@ -20,13 +20,27 @@ function InterviewDetail(){
     },[user])
 
     const GetInterviewDetail= async ()=>{
-        const result = await supabase.from('Interviews')
-        .select(`jobPosition,jobDescription,type,questionList,duration,interview_id,created_at,interview-feedback(userEmail,userName,feedback,created_at)`)
-        .eq('userEmail',user?.email)
-        .eq('interview_id',interview_id)
-        
-        console.log(result);
-        setInterviewDetail(result?.data[0]);
+        try {
+            const result = await supabase.from('Interviews')
+            .select(`jobPosition,jobDescription,type,questionList,duration,interview_id,created_at,interview-feedback(userEmail,userName,feedback,created_at)`)
+            .eq('userEmail',user?.email)
+            .eq('interview_id',interview_id)
+            
+            console.log('Interview Detail Result:', result);
+            
+            if (result.error) {
+                console.error('Supabase Error:', result.error);
+                return;
+            }
+            
+            if (result?.data && result.data.length > 0) {
+                setInterviewDetail(result.data[0]);
+            } else {
+                console.warn('No interview found');
+            }
+        } catch (error) {
+            console.error('Error fetching interview details:', error);
+        }
     }
 
     return(

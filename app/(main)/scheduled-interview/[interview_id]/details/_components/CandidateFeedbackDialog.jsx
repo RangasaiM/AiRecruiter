@@ -13,7 +13,23 @@ import { Progress } from '@/components/ui/progress'
 
 
 function CandidateFeedbackDialog({ candidate }) {
-    const feedback = candidate?.feedback
+    const feedback = candidate?.feedback;
+    
+    // Ensure summary is an array
+    const summaryArray = feedback?.feedback?.summary 
+        ? (Array.isArray(feedback.feedback.summary) 
+            ? feedback.feedback.summary 
+            : [feedback.feedback.summary])
+        : [];
+    
+    // Calculate average rating
+    const calculateAverageRating = () => {
+        const ratings = feedback?.feedback?.rating;
+        if (!ratings) return 0;
+        const sum = (ratings.technicalSkills || 0) + (ratings.communication || 0) + 
+                    (ratings.problemSolving || 0) + (ratings.experience || 0);
+        return Math.round(sum / 4);
+    };
 
     return (
         <Dialog>
@@ -34,7 +50,7 @@ function CandidateFeedbackDialog({ candidate }) {
                                     </div>
                                 </div>
                                 <div className="flex gap-3 items-center">
-                                    <h2 className="text-primary text-2xl font-bold">6/10</h2>
+                                    <h2 className="text-primary text-2xl font-bold">{calculateAverageRating()}/10</h2>
                                 </div>
                             </div>
                             <div className='mt-5'>
@@ -61,9 +77,13 @@ function CandidateFeedbackDialog({ candidate }) {
                             <div className='mt-5'>
                                 <h2 className='font-bold'>Performance Summery</h2>
                                 <div className='p-5 bg-secondary my-3 rounded-md'>
-                                    {feedback?.feedback?.summary?.map((summery, index) => (
-                                        <p key={index}>{summery}</p>
-                                    ))}
+                                    {summaryArray.length > 0 ? (
+                                        summaryArray.map((summery, index) => (
+                                            <p key={index} className='mb-2'>{summery}</p>
+                                        ))
+                                    ) : (
+                                        <p className='text-gray-500'>No summary available</p>
+                                    )}
                                 </div>
                             </div>
 
