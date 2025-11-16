@@ -5,10 +5,13 @@ import { QUESTIONS_PROMPT } from "@/services/Constants";
 export async function POST(req) {
   const { jobPosition, jobDescription, duration, type } = await req.json();
 
+  // Convert type array to string if it's an array
+  const typeString = Array.isArray(type) ? type.join(', ') : type;
+
   const FINAL_PROMPT = QUESTIONS_PROMPT.replace("{{jobTitle}}", jobPosition)
     .replace("{{jobDescription}}", jobDescription)
     .replace("{{duration}}", duration)
-    .replace("{{type}}", type);
+    .replace("{{type}}", typeString);
 
   console.log(FINAL_PROMPT);
 
@@ -26,7 +29,10 @@ export async function POST(req) {
     console.log(completion.choices[0].message);
     return NextResponse.json(completion.choices[0].message);
   } catch (e) {
-    console.log(e);
-    return NextResponse.json(e);
+    console.error('AI Model Error:', e);
+    return NextResponse.json(
+      { error: e.message || 'Failed to generate questions' },
+      { status: 500 }
+    );
   }
 }

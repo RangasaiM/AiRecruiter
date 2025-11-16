@@ -23,21 +23,34 @@ function QuestionList({ formData, onCreateLink }) {
 
   const onFinish = async () => {
     setSaveLoading(true);
-    const interview_id = uuidv4();
-    const { data, error } = await supabase
-      .from("Interviews")
-      .insert([
-        {
-          ...formData,
-          questionList: questionList,
-          userEmail: user?.email,
-          interview_id: interview_id,
-        },
-      ])
-      .select();
-    setSaveLoading(false);
-
-    onCreateLink(interview_id);
+    try {
+      const interview_id = uuidv4();
+      const { data, error } = await supabase
+        .from("Interviews")
+        .insert([
+          {
+            ...formData,
+            questionList: questionList,
+            userEmail: user?.email,
+            interview_id: interview_id,
+          },
+        ])
+        .select();
+      
+      if (error) {
+        console.error('Supabase Error:', error);
+        toast.error(`Error creating interview: ${error.message}`);
+        setSaveLoading(false);
+        return;
+      }
+      
+      setSaveLoading(false);
+      onCreateLink(interview_id);
+    } catch (err) {
+      console.error('Error:', err);
+      toast.error('Failed to create interview');
+      setSaveLoading(false);
+    }
   };
 
   const GenerateQuestionList = async () => {
@@ -46,7 +59,14 @@ function QuestionList({ formData, onCreateLink }) {
       const result = await axios.post("/api/ai-model", {
         ...formData,
       });
-      console.log(result.data);
+      
+      console.log('API Response:', result.data);
+      
+      // Check for error response
+      if (result.data.error) {
+        throw new Error(result.data.error);
+      }
+      
       const Content = result.data.content;
       let FINAL_CONTENT = Content.replace(/```json|```/g, "").trim();
 
@@ -67,7 +87,8 @@ function QuestionList({ formData, onCreateLink }) {
       setQuestionList(parsed.interviewQuestions || []);
       setLoading(false);
     } catch (e) {
-      toast("Server Error, Try Again!");
+      console.error('Question Generation Error:', e);
+      toast.error(e.message || "Server Error, Try Again!");
       setLoading(false);
     }
   };
