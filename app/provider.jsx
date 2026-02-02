@@ -6,6 +6,7 @@ import React, { useEffect, useState, useContext } from "react";
 
 function Provider({ children }) {
   const [user, setUser] = useState();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -13,7 +14,10 @@ function Provider({ children }) {
         data: { user },
         error: userError,
       } = await supabase.auth.getUser();
-      if (userError || !user) return;
+      if (userError || !user) {
+        setLoading(false);
+        return;
+      }
 
       const { data: Users, error } = await supabase
         .from("Users")
@@ -33,13 +37,14 @@ function Provider({ children }) {
       }
       console.log(Users);
       setUser(Users[0]);
+      setLoading(false);
     };
 
     fetchUser();
   }, []);
 
   return (
-    <UserDetailContext.Provider value={{ user, setUser }}>
+    <UserDetailContext.Provider value={{ user, setUser, loading }}>
       <div>{children}</div>
     </UserDetailContext.Provider>
   );

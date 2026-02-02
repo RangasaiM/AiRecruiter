@@ -1,10 +1,10 @@
 "use client";
 import { InterviewDataContext } from "@/context/InterviewDataContext";
-import { Loader2Icon, Mic, Phone, PhoneIncoming, Timer } from "lucide-react";
+import { Loader2Icon, Mic, Phone, Timer } from "lucide-react";
 import Image from "next/image";
-import React, { use, useContext, useEffect, useState, useRef } from "react";
+import React, { useContext, useEffect, useState, useRef } from "react";
 import Vapi from "@vapi-ai/web";
-import AlertConfirmation from "./_components/AlertConfirmation";
+
 import { toast } from "sonner";
 import axios from "axios";
 import { supabase } from "@/services/supabaseClient";
@@ -35,15 +35,18 @@ function StartInterview() {
       startCall();
     } else if (interviewInfo && !vapi) {
       toast.error("Voice API is not initialized. Please check your VAPI API key.");
+    } else if (!interviewInfo) {
+      toast("Please join the interview first.");
+      router.replace("/interview/" + interview_id);
     }
-  }, [interviewInfo]);
+  }, [interviewInfo, vapi, interview_id, router]);
 
   const startCall = () => {
     if (!vapi) {
       toast.error("Voice API is not available");
       return;
     }
-    
+
     setLoading(true);
     let questionList = "";
     interviewInfo?.interviewData?.questionList.forEach(
@@ -247,12 +250,12 @@ Key Guidelines:
         conversation: conversation,
       });
       console.log('Feedback API Response:', result?.data);
-      
+
       const Content = result?.data?.content;
       // Remove markdown code blocks and trim
       let FINAL_CONTENT = Content.replace(/```json|```/g, "").trim();
       console.log('Parsed Feedback Content:', FINAL_CONTENT);
-      
+
       // Parse and validate feedback
       let feedbackData;
       try {
@@ -261,7 +264,7 @@ Key Guidelines:
         console.error('Feedback JSON Parse Error:', parseError);
         throw new Error('Failed to parse feedback response');
       }
-      
+
       // Save to Database
       const { data, error } = await supabase
         .from("interview-feedback")
@@ -275,7 +278,7 @@ Key Guidelines:
           },
         ])
         .select();
-      
+
       if (error) {
         console.error('Supabase Error:', error);
         toast.error('Error saving feedback: ' + error.message);
@@ -283,7 +286,7 @@ Key Guidelines:
         console.log('Feedback saved:', data);
         toast.success('Interview completed successfully!');
       }
-      
+
       router.replace("/interview/" + interview_id + "/completed");
     } catch (error) {
       console.error('Feedback generation error:', error);
@@ -333,7 +336,7 @@ Key Guidelines:
 
       <div className="flex items-center gap-5 justify-center mt-7">
         <Mic className="h-12 w-12 p-3 bg-gray-500 text-white rounded-full cursor-pointer" />
-        {/* <AlertConfirmation stopInterview={() => stopInterview()}> */}
+
         {!loading ? (
           <Phone
             className="h-12 w-12 p-3 bg-red-500 text-white rounded-full cursor-pointer"
@@ -344,7 +347,7 @@ Key Guidelines:
         ) : (
           <Loader2Icon className="animate-spin" />
         )}
-        {/* </AlertConfirmation> */}
+
       </div>
       <h2 className="text-sm text-gray-400 text-center mt-5">
         Interview is in Progress...

@@ -5,9 +5,7 @@ function DashboardLayout({ children }) {
     return (
         <div className="bg-secondary">
             <DashboardProvider>
-                <div className="p-10">
-                    {children}
-                </div>
+                {children}
             </DashboardProvider>
         </div>
     )

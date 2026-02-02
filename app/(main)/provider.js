@@ -6,14 +6,16 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 
 function DashboardProvider({ children }) {
     return (
-        <SidebarProvider>
-            <AppSidebar />
-            <div className="w-full p-10">
-                <SidebarTrigger />
-                <WelcomeContainer />
-                {children}
-            </div>
-        </SidebarProvider>
+        <ProtectedRoute>
+            <SidebarProvider>
+                <AppSidebar />
+                <div className="w-full p-10">
+                    <SidebarTrigger />
+                    <WelcomeContainer />
+                    {children}
+                </div>
+            </SidebarProvider>
+        </ProtectedRoute>
     )
 }
 

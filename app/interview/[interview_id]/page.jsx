@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useContext, useEffect, useState } from "react";
-import InterviewHeader from "../_components/InterviewHeader";
+
 import Image from "next/image";
 import { Clock, Info, Loader2Icon, Video } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -22,7 +22,7 @@ function Interview() {
   const [userName, setUserName] = useState();
   const [userEmail, setUserEmail] = useState();
   const [loading, setLoading] = useState(false);
-  const { interviewInfo, setInterviewInfo } = useContext(InterviewDataContext);
+  const { setInterviewInfo } = useContext(InterviewDataContext);
   const router = useRouter();
 
   useEffect(() => {
@@ -32,7 +32,7 @@ function Interview() {
   const GetInterviewDetails = async () => {
     setLoading(true);
     try {
-      let { data: Interviews, error } = await supabase
+      let { data: Interviews } = await supabase
         .from("Interviews")
         .select("jobPosition,jobDescription,duration,type")
         .eq("interview_id", interview_id);
@@ -53,7 +53,7 @@ function Interview() {
 
   const onJoinInterview = async () => {
     setLoading(true);
-    let { data: Interviews, error } = await supabase
+    let { data: Interviews } = await supabase
       .from("Interviews")
       .select("*")
       .eq("interview_id", interview_id);
